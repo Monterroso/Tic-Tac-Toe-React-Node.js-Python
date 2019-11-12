@@ -1,3 +1,6 @@
+import board
+import player
+
 
 class Game:
   """Class that holds all information about a tic-tac-toe game
@@ -130,9 +133,13 @@ class Game:
         #check if space is free
           #if free, dupblicate board, add id to location
           #add board to boards
-        if self.board
+        if self.board.get_at(i, j) == 0:
+          new_board = self.board.copy()
+          new_board.place_at(player_id, (i, j))
+          boards.append(new_board)
 
     #return boards
+    return boards
 
 
   def check_win(self, player_id):
@@ -146,12 +153,47 @@ class Game:
 
     """
 
+    #Row Check
+    for x in range(self.x_dist):
+      counter = 0
+      for y in range(self.y_dist):
+        if self.board.get_at(x,y) == player_id:
+          counter += 1
+        else: 
+          counter = 0
+
+        if counter == self.num_to_win: 
+          return True
+
+    #Column Check
+    for y in range(self.x_dist):
+      counter = 0
+      for x in range(self.y_dist):
+        if self.board.get_at(x,y) == player_id:
+          counter += 1
+        else: 
+          counter = 0
+
+        if counter == self.num_to_win: 
+          return True
+
+    #If hasn't returned true, then it's false
+    return False
+
   def check_tie(self):
     """Checks if there is no way a player can win, currently returns true if and only if the board is filled
 
     Returns:
       {boolean} -- Returns true if the player is not able to win, false if they still can. 
+
     """
+
+    for i in range(self.x_dist):
+      for j in range(self.y_dist):
+        if self.board.get_at(x,y) != player_id:
+          return False
+
+    return True
 
   def get_current_player(self):
     """Returns the id of the current player 
@@ -161,6 +203,8 @@ class Game:
     
     """
 
+    return self.players[self.turn_number - 1 % len(self.players)]
+
   def get_player(self, player_id):
     """Returns the player given the player's id
 
@@ -169,4 +213,11 @@ class Game:
 
     Returns: 
       {Player} -- The Player object we seek to return
+
     """
+
+    for player in self.players:
+      if player.player_id == player_id:
+        return player
+
+    raise Exception("A player with the given id was not found in the player list")

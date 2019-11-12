@@ -1,25 +1,26 @@
 import copy
 
-class Board:
-  """Class representing a board
+class grid:
+  """Class representing a grid
 
   Members: 
-    board {list of (list of (int))} -- The 2d array of the board 
-    x_dist {integer} -- The size of the board in the X dimension
-    y_dist {integer} -- The size of the board in the Y dimension
+    grid {list of (list of (int))} -- The 2d array of the grid 
+    x_dist {integer} -- The size of the grid in the X dimension
+    y_dist {integer} -- The size of the grid in the Y dimension
 
   Methods:
-    __init__(integer, integer, list of (list of (int))) -- Creates the empty board, or copies a board if an array is given
+    __init__(integer, integer, list of (list of (int))) -- Creates the empty grid, or copies a grid if an array is given
+    get_at(tuple of (integer, integer)) -- Gets the value at the specified x,y location in the grid
     place_at(integer, tuple of (integer, integer)) -- Places the id at the tuple location
-    copy() -- Copies the board object and returns the new object
+    copy() -- Copies the grid object and returns the new object
 
   """
   def __init__(self, x_dist, y_dist, grid=None):
-    """Creates an empty board with given dimensions
+    """Creates an empty Board with given dimensions if grid is None, copies grid otherwise
 
     Arguments: 
-      x_dist {integer} -- The size of the board in the X dimension
-      y_dist {integer} -- The size of the board in the Y dimension
+      x_dist {integer} -- The size of the grid in the X dimension
+      y_dist {integer} -- The size of the grid in the Y dimension
 
     """
     self.x_dist = x_dist
@@ -46,7 +47,7 @@ class Board:
     """Places the player_id at the location given by the location
 
     Arguments:
-      player_id {integer} -- The player id to be placed on the board at the location
+      player_id {integer} -- The player id to be placed on the grid at the location
       location {tuple of (integer, integer)} -- The tuple to represent the x,y location of the slot
 
     """
@@ -54,7 +55,7 @@ class Board:
     y_pos = location[1]
 
     #check if the location is currently occupied
-    if self.board[x_pos][y_pos] is not 0:
+    if self.grid[x_pos][y_pos] is not 0:
       raise Exception("The location ({0}, {1}) is occupied with {3}, you cannot place an id there".format(
         x_pos, y_pox, self.grid[x_pos][y_pos]))
 
@@ -62,11 +63,11 @@ class Board:
     self.grid[x_pos][y_pos] = player_id
 
   def copy(self):
-    """Returns a copy of this board
+    """Returns a copy of this grid
 
     Returns: 
-      {Board} -- A deep copy of this board
+      {grid} -- A deep copy of this grid
 
     """
 
-    return Board(self.x_dist, self.y_dist, self.grid)
+    return grid(self.x_dist, self.y_dist, self.grid)
