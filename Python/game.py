@@ -1,5 +1,4 @@
 from board import Board
-import board_functions as bf
 from player import Player
 from random_player import RandomPlayer
 import unittest
@@ -20,10 +19,14 @@ class Game:
   Methods: 
     __init__(list of (Player), integer, integer) -- Sets up basing game information
     play_game() -- Plays the game to completion
+    resume_game() -- Resumes the game, starting 
+    _turn_cycle({integer}) -- plays a single turn
     _increment_turn() -- Increments the turn counter
     _end_game() -- Does additional work when the game reaches an end state
     get_current_player() -- Gets the id of the current player
+    get_current_board() -- Gets the current board
     get_player({integer}) -- Gets the player object given the id of the player
+    to_json() -- Returns the game encoded as a json object
 
   """
 
@@ -50,7 +53,7 @@ class Game:
 
     self.max_turns = 1000
 
-    self.winner = None
+    self.winner = -1
 
   #####################         ##################### 
   #                    Play Game                    #
@@ -59,41 +62,72 @@ class Game:
   def play_game(self):
     """Plays the tic-tac-toe game to completion
 
+    Returns:
+      {JSON} -- JSON object representing this game
+
     """ 
+
+    while True:
+      #Check if we should wait
+      cur_player_id = self.get_current_player()
+      cur_player = self.get_player(cur_player_id)
+
+      #Pause game execution if stumble upon a user player
+      if cur_player.pause_execution():
+        return self.to_json()
+
+      turn_result = _turn_cycle()
+
+      #If the turn result is not 0, return it
+      if turn_result != 0:
+        return self.to_json()
+
+  def resume_game(self):
+    """Resumes the game from where it was left off, assuming the next player already has their action
+
+    Returns:
+      {JSON} -- JSON object representing this game
+
+    """
+
+    turn_result = _turn_cycle()
+    if turn_result != 0:
+      return self.to_json()
+
+    return self.play_game()
+
+  def _turn_cycle(self):
+    """Does a singluar turn cycle
+
+    Returns:
+      {integer} -- id of the player who won, -1 if tie, 0 if no one has won yet, >0 for player id who won
+
+    """
+
+    #Get current player
     cur_player = self.get_current_player()
 
-    #Loop game until completion
-    while self.turn_number <= self.max_turns:
-      #Store board at current counter
-      self.board_history.append(self.board)
+    #Get board states for current player
+    choices = self.board.get_states(cur_player)
 
-      #Check for win or tie
-        #If either, call end game with respective parameters
-      if bf.check_win(self.board, self.num_to_win, cur_player):
-        self._end_game(cur_player)
-        return
-      if bf.check_tie(self.board):
-        self._end_game()
-        return
+    #Update board state
+    self.board = self.get_player(cur_player).choose_state(choices)
 
-      #Incriment turn counter
-      self._increment_turn()
+    #Incriment turn counter
+    self._increment_turn()
 
-      #Get current player
-      cur_player = self.get_current_player()
+    #Check for win or tie
+    if self.board.check_win(self.num_to_win, cur_player):
+      self._end_game(cur_player)
+      return cur_player
+    if self.board.check_tie():
+      self._end_game()
+      return -1
+    if self.turn_number <= self.max_turns:
+      self._end_game()
+      return -1
 
-      player_object = self.get_player(cur_player)
-
-      #Get all the states
-      next_states = bf.get_states(self.board, cur_player)
-
-      #Get board states for current player
-      chosen_board = next_states[player_object.choose_state(next_states)]
-
-      #Update board state
-      self.board = chosen_board
-
-    
+    return 0
 
   def _increment_turn(self):
     """Increments the turn counter 
@@ -102,7 +136,7 @@ class Game:
 
     self.turn_number += 1
 
-  def _end_game(self, winner_id=None): 
+  def _end_game(self, winner_id=0): 
     """Called when the game has reached a terminal state
 
     Arguments:
@@ -156,22 +190,34 @@ class Game:
 
     return self.board_history
 
-# Members: 
-#     players {list of (Player)} -- The list of Player objects in order to play the game
-#     x_dist {integer} -- The number of tiles in the X direction for the Board
-#     y_dist {integer} -- The number of tiles in the Y direction for the Board
-#     turn_number {integer} -- The turn number of the game, starts at 0
-#     board {Board} -- The current Board in the game
-#     board_history {list of (Board)} -- The list of Board objects representing the game's history
-#     num_to_win {integer} -- The number of tiles horizontally or vertically a player needs to win
+  def to_json(self):
+    """Returns the game in json format
 
-#   Methods: 
-#     __init__(list of (Player), integer, integer) -- Sets up basing game information
-#     play_game() -- Plays the game to completion
-#     _increment_turn() -- Increments the turn counter
-#     _end_game() -- Does additional work when the game reaches an end state
-#     get_current_player() -- Gets the id of the current player
-#     get_player({integer}) -- Gets the player object given the id of the player
+    What needs to be encoded are the current game state, the board history
+    the players, the size of the board, the number of turns, number of turns total
+    and the winner
+
+    Returns:
+      {JSON} -- The JSON encoded version of this current game
+
+    """
+
+    object_json = dict()
+    object_json["Type"] = self.__class__.__name__
+    game_json = dict()
+    game_json["x_dist"] = self.x_dist
+    game_json["y_dist"] = self.y_dist
+    game_json["turn_number"] = self.turn_number
+    game_json["max_turns"] = self.max_turns
+    game_json["winner"] = self.winner
+    game_json["board"] = self.board.to_json
+    game_json["board_history"] = [board.to_json() for board in self.board_history]
+    game_json["players"] = [player.to_json() for player in self.players]
+    object_json["Object"] = game_json
+
+    return object_json
+    
+
 
 class GameTests(unittest.TestCase):
   """Suite to test the functionality of the game
@@ -219,21 +265,27 @@ class GameTests(unittest.TestCase):
       cur_board = a_history[i]
 
       #Check if the board chosen is in valid states
-      self.assertTrue(cur_board in bf.get_states(prev_board, a_players[0].get_id()) or cur_board in bf.get_states(prev_board, a_players[1].get_id()),\
+      self.assertTrue(cur_board in prev_board.get_states(a_players[0].get_id()) or cur_board in prev_board.get_states(a_players[1].get_id()),\
         "An invalid board state was added to the history")
 
       if i == len(a_history) - 1:
-        self.assertTrue(bf.check_win(cur_board, a_num_to_win, a_players[0].get_id()) or bf.check_win(cur_board, a_num_to_win, a_players[1].get_id()) or bf.check_tie(cur_board))
+        self.assertTrue(cur_board.check_win(a_num_to_win, a_players[0].get_id()) or cur_board.check_win(a_num_to_win, a_players[1].get_id()) or cur_board.check_tie())
       else: 
-        self.assertFalse(bf.check_win(cur_board, a_num_to_win, a_players[0].get_id()) or bf.check_win(cur_board, a_num_to_win, a_players[1].get_id()) or bf.check_tie(cur_board))
-
-
-
+        self.assertFalse(cur_board.check_win(a_num_to_win, a_players[0].get_id()) or cur_board.check_win(a_num_to_win, a_players[1].get_id()) or cur_board.check_tie())
 
   def test_get_current_player(self):
     """Suite testing that the current player_id is returned
 
     """
+    a_player_1_id = 1
+    a_player_2_id = 2
+    players = [RandomPlayer(a_player_1_id), RandomPlayer(a_player_2_id)]
+    a_x_dist = 3
+    a_y_dist = 4
+    a_num_to_win = 3
+    a_game = Game(players,a_x_dist,a_y_dist,a_num_to_win)
+
+    
     
     pass
 
@@ -244,5 +296,9 @@ class GameTests(unittest.TestCase):
 
     pass
 
+  def test_
+
+
+  
 if __name__ == '__main__':
   unittest.main()

@@ -1,3 +1,4 @@
+import json
 import unittest
 
 class Player:
@@ -10,6 +11,8 @@ class Player:
     __init__ (integer) -- Creates a player with the unique integer id
     get_id() -- returns the id of the player
     choose_state (list of (Board)) -- Given the board states, chooses one and returns an integer
+    pause_execution () -- Returns true if the player should stop execution
+    to_JSON() -- Converts the player into a JSON object
 
   """
  
@@ -51,6 +54,31 @@ class Player:
     """
     raise NotImplementedError("The behavior of choose_state must be overriden")
 
+  def pause_execution(self):
+    """Returns true or false if execution should be stopped, in the case of waiting for a player
+
+    Returns: 
+      {Boolean} -- True or false if execution should be suspended
+
+    """
+
+    return False
+
+  def to_json(self):
+    """Returns this Player as a JSON object
+
+    Returns:
+      {JSON} -- This object encoded as a JSON, should be overriden
+
+    """
+
+    object_json = dict()
+
+    object_json["Type"] = self.__class__.__name__
+    object_json["Object"] = {"player_id": self.player_id}
+
+    return json.dumps(object_json) 
+
 
 class PlayerTests(unittest.TestCase):
   """The suite to test the player class
@@ -82,6 +110,19 @@ class PlayerTests(unittest.TestCase):
     states = [5,[], "b", None, True, "Bananas"]
 
     self.assertRaises(NotImplementedError, a_player.choose_state, states)
+
+  def test_to_json(self):
+    """Suite testing that a player is properly stored as a JSON
+    
+    """
+
+    #All the needs to be tested is that the JSON is formatted properly 
+
+    a_player_id = 1
+    a_player = Player(a_player_id)
+    a_player_json = a_player.to_json()
+
+    self.assertEqual(a_player_json, '{{"Type": "Player", "Object": {{"player_id": {0}}}}}'.format(a_player_id))
 
 
 if __name__ == '__main__':

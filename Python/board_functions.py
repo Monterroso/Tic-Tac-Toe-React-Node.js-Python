@@ -5,9 +5,9 @@ import unittest
 
 """A module containing functions that do things to the board. 
 
-#     get_states(brd, integer) -- Gets all possible states for a given player
-#     check_win(brd, integer) -- Checks if the player is in a win state (only horizontal and vertical)
-#     check_tie(brd) -- Checks if current state is in a tie state (only if the board is completely filled)
+#     get_states(board, integer) -- Gets all possible states for a given player
+#     check_win(board, integer) -- Checks if the player is in a win state (only horizontal and vertical)
+#     check_tie(board) -- Checks if current state is in a tie state (only if the board is completely filled)
 
 """
 
