@@ -32,6 +32,15 @@ class Player:
 
     self.player_id = player_id
 
+  def __eq__(self, obj):
+    """Two players are equal if they have the same id and are of the same class
+
+    Arguments:
+      obj {object} -- The object we are comparing to self
+
+    """
+    return type(obj) == type(self) and self.player_id == obj.player_id
+
   def get_id(self):
     """Returns the id of the player
 

@@ -220,7 +220,7 @@ class Board:
     board_obj["grid"] = self.grid
     object_json["Object"] = board_obj
 
-    return object_json
+    return json.dumps(object_json)
 
 class BoardTests(unittest.TestCase):
   """Full suit of testing for the board and it's functionality

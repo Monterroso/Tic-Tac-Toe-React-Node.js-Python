@@ -2,6 +2,7 @@ from board import Board
 from player import Player
 from random_player import RandomPlayer
 from user_player import UserPlayer
+from zero_player import ZeroPlayer
 import json
 import unittest
 
@@ -69,6 +70,60 @@ class Game:
     self.max_turns = max_turns
 
     self.winner = winner
+
+  def __eq__(self, obj):
+    """Games are equivalent if all of it's parameters are equal.
+
+    Arguments:
+      obj {object} -- The object we are comparing to self
+
+    """
+
+    #Types must be the same
+    if type(self) != type(obj):
+      return False
+
+    #The number of players must be the same
+    if len(self.players) != len(obj.players):
+      return False
+
+    #Players must be the same
+    for i in range(len(self.players)):
+      if self.players[i] != obj.players[i]:
+        return False
+
+    #The number to win must be the same 
+    if self.num_to_win != obj.num_to_win:
+      return False
+
+    #The turn number must be the same
+    if self.turn_number != obj.turn_number:
+      return False
+
+    #The max turn numbers must be the same
+    if self.max_turns != obj.max_turns:
+      return False
+
+    #The winner must be the same
+    if self.winner != obj.winner:
+      return False
+
+    #The current board must be the same
+    if self.board != obj.board:
+      return False
+
+    #The board histories must be the same length
+    if len(self.board_history) != len(obj.board_history):
+      return False
+
+    #The histories must be the same
+    for i in range(len(self.board_history)):
+      if self.board_history[i] != obj.board_history[i]:
+        return False
+
+    #If all these conditions are met then we return true
+    return True
+
 
   #####################         ##################### 
   #                    Play Game                    #
@@ -257,6 +312,43 @@ class GameTests(unittest.TestCase):
 
     #Check to be sure the board is properly set up
     self.assertEqual(a_game.board, Board(grid=[[0 for _ in range(a_y_dist)] for _ in range(a_x_dist)]))
+
+  def test_equal(self):
+    """Suite to test that equal boards can be compared
+
+    """
+
+    a_players = [ZeroPlayer(1), ZeroPlayer(2)]
+    a_x_dist = 3
+    a_y_dist = 3
+    a_num_to_win = 1
+    a_game = Game(a_players, a_x_dist, a_y_dist, a_num_to_win)
+
+    b_players = [ZeroPlayer(1), ZeroPlayer(2)]
+    b_x_dist = 3
+    b_y_dist = 3
+    b_num_to_win = 1
+    b_game = Game(b_players, b_x_dist, b_y_dist, b_num_to_win)
+
+    c_players = [ZeroPlayer(1), ZeroPlayer(2)]
+    c_x_dist = 3
+    c_y_dist = 3
+    c_num_to_win = 1
+    c_game = Game(c_players, c_x_dist, c_y_dist, c_num_to_win)
+
+    self.assertTrue(b_game == a_game == c_game)
+
+    a_game.play_game()
+    b_game.play_game()
+
+    self.assertTrue(a_game == b_game)
+    self.assertFalse(c_game == a_game)
+
+    c_game.play_game()
+
+    self.assertTrue(b_game == a_game == c_game)
+
+
 
   def test_play_game(self):
     """Suite to test the play game method
