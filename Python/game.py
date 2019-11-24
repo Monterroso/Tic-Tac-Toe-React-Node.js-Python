@@ -1,6 +1,8 @@
 from board import Board
 from player import Player
 from random_player import RandomPlayer
+from user_player import UserPlayer
+import json
 import unittest
 
 
@@ -48,7 +50,7 @@ class Game:
 
     self.turn_number = 0
     self.board = Board(x_dist, y_dist)
-    self.board_history = []
+    self.board_history = [self.board]
     self.num_to_win = num_to_win
 
     self.max_turns = 1000
@@ -76,7 +78,7 @@ class Game:
       if cur_player.pause_execution():
         return self.to_json()
 
-      turn_result = _turn_cycle()
+      turn_result = self._turn_cycle()
 
       #If the turn result is not 0, return it
       if turn_result != 0:
@@ -90,7 +92,7 @@ class Game:
 
     """
 
-    turn_result = _turn_cycle()
+    turn_result = self._turn_cycle()
     if turn_result != 0:
       return self.to_json()
 
@@ -103,6 +105,8 @@ class Game:
       {integer} -- id of the player who won, -1 if tie, 0 if no one has won yet, >0 for player id who won
 
     """
+    #Incriment turn counter
+    self._increment_turn()
 
     #Get current player
     cur_player = self.get_current_player()
@@ -111,10 +115,10 @@ class Game:
     choices = self.board.get_states(cur_player)
 
     #Update board state
-    self.board = self.get_player(cur_player).choose_state(choices)
+    self.board = choices[self.get_player(cur_player).choose_state(choices)]
 
-    #Incriment turn counter
-    self._increment_turn()
+    #Make sure you have the history, original board is added, so we can do it afterwards
+    self.board_history.append(self.board)
 
     #Check for win or tie
     if self.board.check_win(self.num_to_win, cur_player):
@@ -123,7 +127,7 @@ class Game:
     if self.board.check_tie():
       self._end_game()
       return -1
-    if self.turn_number <= self.max_turns:
+    if self.turn_number >= self.max_turns:
       self._end_game()
       return -1
 
@@ -143,10 +147,12 @@ class Game:
       winner_id {integer} -- The id of the winning player, None if game is a tie
 
     """
-    if winner_id == None:
-      print("The game was a tie!")
+    if winner_id == 0:
+      # print("The game was a tie!")
+      pass
     else:
-      print("{0} has won the game!".format(winner_id))
+      # print("{0} has won the game!".format(winner_id))
+      pass
     self.winner = winner_id
 
   #####################         ##################### 
@@ -210,12 +216,12 @@ class Game:
     game_json["turn_number"] = self.turn_number
     game_json["max_turns"] = self.max_turns
     game_json["winner"] = self.winner
-    game_json["board"] = self.board.to_json
+    game_json["board"] = self.board.to_json()
     game_json["board_history"] = [board.to_json() for board in self.board_history]
     game_json["players"] = [player.to_json() for player in self.players]
     object_json["Object"] = game_json
 
-    return object_json
+    return json.dumps(object_json)
     
 
 
@@ -247,6 +253,7 @@ class GameTests(unittest.TestCase):
     
     """
 
+    
     a_players = [RandomPlayer(1), RandomPlayer(2)]
     a_x_dist = 3
     a_y_dist = 3
@@ -273,31 +280,87 @@ class GameTests(unittest.TestCase):
       else: 
         self.assertFalse(cur_board.check_win(a_num_to_win, a_players[0].get_id()) or cur_board.check_win(a_num_to_win, a_players[1].get_id()) or cur_board.check_tie())
 
-  def test_get_current_player(self):
-    """Suite testing that the current player_id is returned
+  def test_play_game_hard(self):
+    """Test the game, pushing it to its limits
 
     """
+    wins = [0,0,0]
+
+    for i in range(1,10):
+      a_player_1_id = 1
+      a_player_2_id = 2
+      a_players = [RandomPlayer(a_player_1_id), RandomPlayer(a_player_2_id)]
+      a_x_dist = i
+      a_y_dist = i
+      a_num_to_win = 3
+      a_game = Game(a_players,a_x_dist,a_y_dist,a_num_to_win)
+      a_game.play_game()
+
+      wins[a_game.winner] += 1
+
+    print(wins)
+
+  def test_resume_game(self):
+    """Suite testing that the game itself can be properly stopped and started
+
+    """
+
+    a_player_1 = RandomPlayer(1)
+    a_player_2 = UserPlayer(2)
+    a_player_2.set_choice(0)
+    a_players = [a_player_1, a_player_2]
+    a_x_dist = 5
+    a_y_dist = 5
+    a_num_to_win = 3
+    a_game = Game(a_players,a_x_dist,a_y_dist,a_num_to_win)
+
+    #game will pause
+    a_game.play_game()
+
+    while a_game.winner != -1:
+      a_player_2.set_choice(0)
+      a_game.resume_game()
+
+
+
+
+
+
+  def test_to_json(self):
+    """Suite testing that the json values are properly created for this game object
+
+    """
+    self.maxDiff = None
+
     a_player_1_id = 1
     a_player_2_id = 2
-    players = [RandomPlayer(a_player_1_id), RandomPlayer(a_player_2_id)]
+    a_players = [RandomPlayer(a_player_1_id), RandomPlayer(a_player_2_id)]
     a_x_dist = 3
-    a_y_dist = 4
-    a_num_to_win = 3
-    a_game = Game(players,a_x_dist,a_y_dist,a_num_to_win)
+    a_y_dist = 3
+    a_num_to_win = 2
+    a_game = Game(a_players,a_x_dist,a_y_dist,a_num_to_win)
+    a_game_json = a_game.play_game()
+
+    #Make sure that the game itself is valid
+    #Create dictionary, convert to json 
+    
+
+    object_json = dict()
+    object_json["Type"] = "Game"
+    game_json = dict()
+    game_json["x_dist"] = a_game.x_dist
+    game_json["y_dist"] = a_game.y_dist
+    game_json["turn_number"] = a_game.turn_number
+    game_json["max_turns"] = a_game.max_turns
+    game_json["winner"] = a_game.winner
+    game_json["board"] = a_game.board.to_json()
+    game_json["board_history"] = [board.to_json() for board in a_game.board_history]
+    game_json["players"] = [player.to_json() for player in a_players]
+    object_json["Object"] = game_json
+
+    self.assertEqual(json.dumps(object_json), a_game_json)
 
     
-    
-    pass
-
-  def test_get_player(self):
-    """Suite testing that the corresponding player given the id is given
-
-    """
-
-    pass
-
-  def test_
-
 
   
 if __name__ == '__main__':
