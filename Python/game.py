@@ -32,30 +32,43 @@ class Game:
 
   """
 
-  def __init__(self, players, x_dist, y_dist, num_to_win):
+  def __init__(self, players, x_dist, y_dist, num_to_win, turn_start=0, max_turns=1000, winner=-1, brd=None, board_history=None):
     """Creates a game that can be started from start to finish
 
     Creates the game board and sets turn counter to 0
+
+    Optional parameters can be given to recreate any given game
 
     Arguments: 
       players {list of (Player)} -- The players given in order to play the tic-tac-toe game
       x_dist {integer} -- The number of tiles in the X direction
       y_dist {integer} -- The number of tiles in the Y direction
       num_to_win {integer} -- The number of tiles in a row or horizontally one needs to win
+      turn_start {integer} -- Which turn the game is considered to have started on, default 0
+      max_turns {integer} -- The maximum number of turns this game can go on for, default 1000
+      winner {integer} -- If the game is already considered to be finished, default -1
+      brd {Board} -- The current of the game, default new board
+      board_history {list of (Board)} -- List of the histories of the board
 
     """
     self.players = players
     self.x_dist = x_dist
     self.y_dist = y_dist
 
-    self.turn_number = 0
-    self.board = Board(x_dist, y_dist)
-    self.board_history = [self.board]
+    self.turn_number = turn_start
+    if brd == None:
+      self.board = Board(x_dist, y_dist)
+    else:
+      self.board = brd
+    if board_history == None:
+      self.board_history = [self.board]
+    else: 
+      self.board_history = board_history
     self.num_to_win = num_to_win
 
-    self.max_turns = 1000
+    self.max_turns = max_turns
 
-    self.winner = -1
+    self.winner = winner
 
   #####################         ##################### 
   #                    Play Game                    #
@@ -215,6 +228,7 @@ class Game:
     game_json["y_dist"] = self.y_dist
     game_json["turn_number"] = self.turn_number
     game_json["max_turns"] = self.max_turns
+    game_json["num_to_win"] = self.num_to_win
     game_json["winner"] = self.winner
     game_json["board"] = self.board.to_json()
     game_json["board_history"] = [board.to_json() for board in self.board_history]
@@ -352,6 +366,7 @@ class GameTests(unittest.TestCase):
     game_json["y_dist"] = a_game.y_dist
     game_json["turn_number"] = a_game.turn_number
     game_json["max_turns"] = a_game.max_turns
+    game_json["num_to_win"] = a_game.num_to_win
     game_json["winner"] = a_game.winner
     game_json["board"] = a_game.board.to_json()
     game_json["board_history"] = [board.to_json() for board in a_game.board_history]

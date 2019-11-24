@@ -1,34 +1,95 @@
 import json
+from game import Game
+from player import Player
+from user_player import UserPlayer
+from random_player import RandomPlayer
+from board import Board
 
 """Utilizes functions for reading and writing from a JSON file
 
-#       to_JSON(object) -- Condenses the object into a JSON object
-#       from_JSON(JSON) -- Converts the JSON object into a python object
+  Functions: 
+      game_from_json({JSON}) -- Given a JSON object of a game, converts into game object
+      player_from_json({JSON}) -- Given a dictionary of a player, converts into appropriate player
+      board_from_json({JSON}) -- Given a JSON object of a board, converts into appropriate board
 
 """
 
-#A function that writes the object to the json file
+def game_from_json(json_obj):
+  """Converts the game object encoded as a json into a game object and returns it
 
-#A function that creates the object from the json file
-#Needs an attribute to state exactly what type of object it is. 
-#Want a function to be able to read a game from file
+  Arguments:
+    json_obj {JSON} -- encoded Game object we want to decode
 
-#Function that turns a board token, or a game token. 
+  Returns:
+    {Game} -- The decoded Game object
 
-#The game itself contains information, either self containing ais, or ones that wait for a response 
+  """
 
-#Game will continue taking turns up until it needs to wait, after doing so, it will then wait and get a response
+  object_json = json.loads(json_obj)
 
-#Have user_player, which right now will do nothing, but will cause the program to terminate, and it will wait for a response.
-# 
-# Game itself checks if user_player
-# If yes, the game itself stores all of it's info and resturns as a JSON object, you have the turn number and current order
+  if object_json["Type"] != "Game":
+    raise AttributeError("The json object is not a Game object, it is a {0}".format(object_json["Type"]))
 
-#Game first checks if the player will be a user_player, 
+  #Otherwise we know it is a json object
+  game_obj = object_json["Object"] 
+  x_dist = game_obj["x_dist"]
+  y_dist = game_obj["y_dist"]
+  turn_number = game_obj["turn_number"]
+  max_turns = game_obj["max_turns"]
+  num_to_win = game_obj["num_to_win"]
+  winner = game_obj["winner"]
+  board = board_from(game_obj["board"])
+  board_history = [board_from(brd) for brd in game_obj["board_history"]]
+  players = [player_from(plr) for plr in game_obj["players"]]
 
-#If game detects this, game will store information as to the turn and who's up
-#Returns the game as a JSON, along with current board state, all options, and the id of who's next, all in the JSON
-#Don't need to return the history right now
-#Game is then recreated when it wants to be brought to life, given command line for that argument for which choice
-#When Game is created, the create from JSON is created, given the integer to be the argument to continue for the player
-#   
+  return Game(players, x_dist, y_dist, num_to_win, turn_start=turn_number,\
+     max_turns=max_turns, winner=winner, brd=board, board_history=board_history)
+
+
+def player_from(dic_obj):
+  """Given a player dictionary, converts the dictionary into a player object
+
+  Arguments: 
+    dic_obj {dictionary} -- The dictionary representing the player object
+
+  Returns:
+    {Player} -- The decoded player object
+
+  """
+  if not issubclass(eval(dic_obj["Type"]), Player):
+    raise AttributeError("This is not a player dictionary object, it is a {0}".format(dic_obj["Type"]))
+
+  player_obj = dic_obj["Object"]
+
+  player_id = player_obj["player_id"]
+  
+  return eval(dic_obj["Type"])(player_id)
+
+def board_from(dic_obj):
+  """Given a board dictionary, converts the dictionary into a Board object
+
+  Arguments:
+    dic_obj {dictionary} -- The dictionary representing the Board object
+
+  Returns:
+    {Board} -- The decoded Board object
+
+  """
+
+  if dic_obj["Type"] != "Board":
+    raise AttributeError("This is not a Board dictionary object, it is a {0}".format(dic_obj["Type"]))
+
+  #   object_json = dict()
+  #   object_json["Type"] = self.__class__.__name__
+  #   board_obj = dict()
+  #   board_obj["x"] = self.x_dist
+  #   board_obj["y"] = self.y_dist
+  #   board_obj["grid"] = self.grid
+  #   object_json["Object"] = board_obj
+
+  board_obj = dic_obj["Object"]
+  x = board_obj["x"]
+  y = board_obj["y"]
+  grid = board_obj["grid"] 
+
+  return Board(grid=grid)
