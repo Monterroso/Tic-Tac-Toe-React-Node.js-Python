@@ -1,1 +1,9 @@
 *.pyproj
+
+node_modules/
+jspm_packages/
+
+.vs/
+__pycache__/
+
+
