@@ -26,6 +26,7 @@ class Game:
     _turn_cycle({integer}) -- plays a single turn
     _increment_turn() -- Increments the turn counter
     _end_game() -- Does additional work when the game reaches an end state
+    is_game_over() -- Returns true if the game is finished, false if the game is not
     get_current_player() -- Gets the id of the current player
     get_current_board() -- Gets the current board
     get_player({integer}) -- Gets the player object given the id of the player
@@ -33,7 +34,8 @@ class Game:
 
   """
 
-  def __init__(self, players, x_dist, y_dist, num_to_win, turn_start=0, max_turns=1000, winner=-1, brd=None, board_history=None):
+  def __init__(self, players, x_dist, y_dist, num_to_win, turn_start=0, max_turns=1000,\
+     winner=-1, brd=None, board_history=None):
     """Creates a game that can be started from start to finish
 
     Creates the game board and sets turn counter to 0
@@ -173,8 +175,6 @@ class Game:
       {integer} -- id of the player who won, -1 if tie, 0 if no one has won yet, >0 for player id who won
 
     """
-    #Incriment turn counter
-    self._increment_turn()
 
     #Get current player
     cur_player = self.get_current_player()
@@ -198,6 +198,9 @@ class Game:
     if self.turn_number >= self.max_turns:
       self._end_game()
       return -1
+
+    #Incriment turn counter if the game has not ended
+    self._increment_turn()
 
     return 0
 
@@ -227,6 +230,19 @@ class Game:
   #                    Utilities                    #
   #####################         ##################### 
 
+  def is_game_over(self):
+    """Checks if the game has been played to completion
+
+    Returns:
+      {Boolean} -- True if game is over, False if it is not
+
+    """
+
+    if self.winner != 0:
+      return True
+
+    return False
+
   def get_current_player(self):
     """Returns the id of the current player 
 
@@ -235,7 +251,7 @@ class Game:
     
     """
 
-    return self.players[(self.turn_number - 1) % len(self.players)].get_id()
+    return self.players[(self.turn_number) % len(self.players)].get_id()
 
   def get_player(self, player_id):
     """Returns the player given the player's id

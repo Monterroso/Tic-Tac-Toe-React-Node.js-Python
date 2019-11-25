@@ -27,8 +27,8 @@ class Player:
 
     """
     
-    if player_id == 0:
-      raise AttributeError("You cannot assign 0 to the player_id")
+    if player_id <= 0:
+      raise AttributeError("You cannot assign 0 or lower to the player_id")
 
     self.player_id = player_id
 
