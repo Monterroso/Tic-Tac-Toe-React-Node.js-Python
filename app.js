@@ -4,9 +4,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const pythonShell = require("python-shell");
+let {PythonShell} = require('python-shell')
 
-const app = express()
+const app = express();
 
 app.set('view engine', 'ejs');
 
@@ -21,59 +21,64 @@ mongoose.connect('mongodb://localhost:27017/tictactoeDB',
 })
 .catch((err) => {
   console.log(err);
-})
-
-// self.x_dist = x_dist
-//     self.y_dist = y_dist
-
-//     self.turn_number = turn_start
-//     if brd == None:
-//       self.board = Board(x_dist, y_dist)
-//     else:
-//       self.board = brd
-//     if board_history == None:
-//       self.board_history = [self.board]
-//     else: 
-//       self.board_history = board_history
-//     self.num_to_win = num_to_win
-
-//     self.max_turns = max_turns
-
-//     self.winner = winner
-
+});
 
 //Set the schemas
 const GameInfoSchema = new mongoose.Schema ({
-  game: GameSchema
+  _id: {},
+  game: {}
 });
 
-const GameSchema = new mongoose.Schema ({
-  players: [PlayerSchema],
-  x_dist: {type: Number, min: 1},
-  y_dist: {type: Number, min: 1},
-  turn_number: {type: Number, min: 0}, 
-  num_to_win: {type: Number, min: 0},
-  max_turns: {type: Number, min: 0},
-  winner: {type: Number, min: -1},
-  board: BoardSchema,
-  board_history: [BoardSchema]
-});
+const Game = new mongoose.model("game", GameInfoSchema);
 
-const BoardSchema = new mongoose.Schema({
-  x_dist: {type: Number, min: 1},
-  y_dist: {type: Number, min: 1},
-  grid: [[int]]
-});
+function createJSON(jsonString) {
+  try {
+    let o;
+    if (typeof o === "object") {
+      o = jsonString;
+    }
+    else {
+      o = JSON.parse(jsonString);
+    }
 
-const PlayerSchema = new mongoose.Schema ({
-  type: String,
-  playerID: {type: Number, min: 1}
-})
+    // Handle non-exception-throwing cases:
+    // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+    // but... JSON.parse(null) returns null, and typeof null === "object", 
+    // so we must check for that, too. Thankfully, null is falsey, so this suffices:
+    if (o && typeof o === "object") {
+      let keys = Object.keys(o);
+      console.log(keys);
+      for (let key of keys) {
+        o[key] = createJSON(o[key]);
+      }
+      return o;
+    }
+  }
+  catch (e) { 
+    console.log("An error was caught, the error is " + e + "The thing to be parsed was " + jsonString);
+  }
+  return jsonString;
+}
 
-const Task = mongoose.model("Game", ItemSchema);
 
 app.get("/", function(req, res) {
-  res.render("home")
+  let pyshell = new PythonShell(__dirname + "/public/Python/python_controller.py");
+  let gameResult;
+
+  //Recursively recreate the JSON
+  pyshell.on('message', function (message) {
+    gameResult = message;
+  });
+
+  pyshell.end(function (err, code, signal) {
+    if (err) throw err;
+
+    currentGame = createJSON(gameResult)["game_json"]["Object"];
+    currentBoard = currentGame["board"];
+    currentOptions = createJSON(gameResult)["choices"];
+    res.render("home", {game: createJSON(gameResult), currentGame: currentGame, currentOptions: currentOptions});
+    console.log('finished');
+  });
 });
 
 app.listen(3000, function() {
