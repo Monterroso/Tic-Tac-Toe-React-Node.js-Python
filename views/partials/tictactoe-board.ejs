@@ -1,0 +1,3 @@
+<%for(let x = 0; x < board["x"]; x++) {%>
+  <%- include("tictactoe-column", {columnNumber: x, isEnd: x===board["x"], column: board["grid"][x]})-%>
+<%}%>

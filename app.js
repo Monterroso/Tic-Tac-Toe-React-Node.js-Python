@@ -34,7 +34,7 @@ const Game = new mongoose.model("game", GameInfoSchema);
 function createJSON(jsonString) {
   try {
     let o;
-    if (typeof o === "object") {
+    if (typeof jsonString === "object") {
       o = jsonString;
     }
     else {
@@ -47,7 +47,6 @@ function createJSON(jsonString) {
     // so we must check for that, too. Thankfully, null is falsey, so this suffices:
     if (o && typeof o === "object") {
       let keys = Object.keys(o);
-      console.log(keys);
       for (let key of keys) {
         o[key] = createJSON(o[key]);
       }
@@ -55,7 +54,7 @@ function createJSON(jsonString) {
     }
   }
   catch (e) { 
-    console.log("An error was caught, the error is " + e + "The thing to be parsed was " + jsonString);
+    // console.log("An error was caught, the error is " + e + "The thing to be parsed was " + jsonString);
   }
   return jsonString;
 }
@@ -73,11 +72,12 @@ app.get("/", function(req, res) {
   pyshell.end(function (err, code, signal) {
     if (err) throw err;
 
-    currentGame = createJSON(gameResult)["game_json"]["Object"];
+    info = createJSON(gameResult)
+    // res.send(info);
+    currentGame = info["game_json"]["Object"];
     currentBoard = currentGame["board"];
-    currentOptions = createJSON(gameResult)["choices"];
+    currentOptions = info["choices"];
     res.render("home", {game: createJSON(gameResult), currentGame: currentGame, currentOptions: currentOptions});
-    console.log('finished');
   });
 });
 

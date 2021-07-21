@@ -1,16 +1,23 @@
 <%- include("partials/header.ejs") -%>
 
+<%let board = element["Object"]["grid"]%>
+<%let width = element["Object"]["x"]%>
+<%let height = element["Object"]["y"]%>
+
 <h1>Hello there!</h1>
 
-<p>This is the current board is <%=currentBoard%></p>
+<p>This is the current board</p>
+<span class="board"></span>
+
+<!-- <p>This is the current board is <%- include("partials/tictactoe-board", {board: currentBoard["Object"]})-%></p> -->
 
 <p>Here are all the possible board options</p>
-<%currentOptions.forEach(function(element) {%>
-    <p><%=element%></p>
-<%})%>
+<!-- <%currentOptions.forEach(function(element) {%>
+    <p><%- include("partials/tictactoe-board", {board: element["Object"]})-%></p>
+    <hr>
+<%})%> -->
 
-<form action="/" method="post">
-    <input type="text">
-</form>
+<script id="boardCreator" src="/scripts/createBoard.js" width=`${<%=width%>}` 
+height=`<%=height%>`></script>
 
 <%- include("partials/footer.ejs") -%>
